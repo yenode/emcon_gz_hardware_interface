@@ -1,0 +1,46 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    name: Build and Test (ROS 2 Jazzy)
+    runs-on: ubuntu-24.04
+    container:
+      image: osrf/ros:jazzy-desktop
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          path: src/emcon_gz_hardware_interface
+
+      - name: Setup ROS Workspace
+        run: |
+          sudo apt-get update
+          rosdep update
+          rosdep install --from-paths src --ignore-src -r -y
+          
+      - name: Install Additional Dependencies
+        run: |
+          # Ensure linter tools and gazebo transport/msgs are installed
+          sudo apt-get install -y \
+            ros-jazzy-ament-lint-auto \
+            ros-jazzy-ament-lint-common \
+            ros-jazzy-ros-gz
+
+      - name: Build
+        run: |
+          source /opt/ros/jazzy/setup.bash
+          colcon build --packages-select emcon_gz_hardware_interface --event-handlers console_direct+
+
+      - name: Test
+        run: |
+          source /opt/ros/jazzy/setup.bash
+          source install/setup.bash
+          colcon test --packages-select emcon_gz_hardware_interface --event-handlers console_direct+
+          colcon test-result --all
