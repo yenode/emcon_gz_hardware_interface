@@ -1,0 +1,13 @@
+<library path="emcon_hardware_interface">
+  <class name="emcon_hardware_interface/EmconSystemInterface"
+         type="emcon_hardware_interface::EmconSystemInterface"
+         base_class_type="hardware_interface::SystemInterface">
+    <description>
+      EMCON hardware interface. Publishes joint commands to the
+      Gazebo physics engine via gz-transport and reads joint state feedback
+      back, completely bypassing ROS 2 DDS. Enables multi-domain EMCON
+      operation where the controller_manager runs natively on the robot's
+      ROS_DOMAIN_ID while Gazebo runs on a separate domain.
+    </description>
+  </class>
+</library>
