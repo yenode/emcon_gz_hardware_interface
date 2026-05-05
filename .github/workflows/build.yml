@@ -29,9 +29,7 @@ jobs:
           sudo apt-get install -y \
             ros-jazzy-ament-lint-auto \
             ros-jazzy-ament-lint-common \
-            ros-jazzy-ros-gz \
-            libgz-transport13-dev \
-            libgz-msgs10-dev
+            ros-jazzy-ros-gz
 
       - name: Build
         run: |
