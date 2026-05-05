@@ -1,0 +1,9 @@
+<library path="emcon_gz_hardware_interface">
+  <class name="emcon_gz_hardware_interface/EmconGzSystemInterface"
+         type="emcon_gz_hardware_interface::EmconGzSystemInterface"
+         base_class_type="hardware_interface::SystemInterface">
+    <description>
+      GzTransport hardware interface.
+    </description>
+  </class>
+</library>
