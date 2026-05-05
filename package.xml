@@ -1,10 +1,9 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>gz_transport_hardware_interface</name>
+  <name>emcon_gz_hardware_interface</name>
   <version>0.1.0</version>
-  <description>GzTransport: ros2_control SystemInterface that bridges joint commands
-  across ROS_DOMAIN_IDs via gz-transport, bypassing DDS entirely.</description>
+  <description>EMCON Gz: ros2_control SystemInterface for Gazebo transport.</description>
   <maintainer email="adi.pachauri.444@gmail.com">aditya-pachauri</maintainer>
   <license>Apache-2.0</license>
 

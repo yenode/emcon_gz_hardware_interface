@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(gz_transport_hardware_interface)
+project(emcon_gz_hardware_interface)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -14,17 +14,15 @@ find_package(pluginlib REQUIRED)
 find_package(rclcpp_lifecycle REQUIRED)
 find_package(realtime_tools REQUIRED)
 
-# Gazebo Transport (gz-transport13 for Jazzy/Harmonic)
 find_package(gz-transport13 REQUIRED)
 find_package(gz-msgs10 REQUIRED)
 
-
 add_library(${PROJECT_NAME} SHARED
-  src/gz_transport_system_interface.cpp
+  src/emcon_gz_system_interface.cpp
 )
 
 target_compile_definitions(${PROJECT_NAME}
-  PRIVATE "GZ_TRANSPORT_HARDWARE_INTERFACE_BUILDING_DLL"
+  PRIVATE "EMCON_GZ_HARDWARE_INTERFACE_BUILDING_DLL"
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC
@@ -45,9 +43,7 @@ target_link_libraries(${PROJECT_NAME}
   gz-msgs10::gz-msgs10
 )
 
-
-pluginlib_export_plugin_description_file(hardware_interface gz_transport_hardware_interface.xml)
-
+pluginlib_export_plugin_description_file(hardware_interface emcon_gz_hardware_interface.xml)
 
 install(
   TARGETS ${PROJECT_NAME}
