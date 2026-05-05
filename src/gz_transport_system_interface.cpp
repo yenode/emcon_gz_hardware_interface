@@ -1,11 +1,11 @@
-// Copyright 2026 Silent Sentry Project
+// Copyright 2026 Aditya Pachauri
 // SPDX-License-Identifier: Apache-2.0
 //
-// EMCON — ros2_control SystemInterface implementation.
+// GzTransport — ros2_control SystemInterface implementation.
 // Uses gz-transport to communicate joint commands/states directly with
 // the Gazebo physics engine, bypassing ROS 2 DDS entirely.
 
-#include "emcon_hardware_interface/emcon_system_interface.hpp"
+#include "gz_transport_hardware_interface/gz_transport_system_interface.hpp"
 
 #include <cmath>
 #include <string>
@@ -15,13 +15,13 @@
 #include "pluginlib/class_list_macros.hpp"
 #include "rclcpp/rclcpp.hpp"
 
-namespace emcon_hardware_interface
+namespace gz_transport_hardware_interface
 {
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  on_init — Parse joint configuration from URDF HardwareInfo
 // ═══════════════════════════════════════════════════════════════════════════
-hardware_interface::CallbackReturn EmconSystemInterface::on_init(
+hardware_interface::CallbackReturn GzTransportSystemInterface::on_init(
   const hardware_interface::HardwareInfo & hardware_info)
 {
   // Call the parent on_init (stores hardware_info into info_)
@@ -45,7 +45,7 @@ hardware_interface::CallbackReturn EmconSystemInterface::on_init(
 
   RCLCPP_INFO(
     get_logger(),
-    "[EMCON] Initializing for model='%s' in world='%s'",
+    "[GzTransport] Initializing for model='%s' in world='%s'",
     bot_name_.c_str(), world_name_.c_str());
 
   // ── Parse joints from the URDF <ros2_control> block ──
@@ -77,7 +77,7 @@ hardware_interface::CallbackReturn EmconSystemInterface::on_init(
 
     RCLCPP_INFO(
       get_logger(),
-      "[EMCON]   Joint[%zu]: '%s'  cmd_type='%s'",
+      "[GzTransport]   Joint[%zu]: '%s'  cmd_type='%s'",
       i, joint_configs_[i].name.c_str(),
       joint_configs_[i].command_interface_type.c_str());
   }
@@ -88,10 +88,10 @@ hardware_interface::CallbackReturn EmconSystemInterface::on_init(
 // ═══════════════════════════════════════════════════════════════════════════
 //  on_configure — Stand up the gz-transport node and subscribe to joint states
 // ═══════════════════════════════════════════════════════════════════════════
-hardware_interface::CallbackReturn EmconSystemInterface::on_configure(
+hardware_interface::CallbackReturn GzTransportSystemInterface::on_configure(
   const rclcpp_lifecycle::State & /*previous_state*/)
 {
-  RCLCPP_INFO(get_logger(), "[EMCON] Creating gz-transport node...");
+  RCLCPP_INFO(get_logger(), "[GzTransport] Creating gz-transport node...");
   gz_node_ = std::make_unique<gz::transport::Node>();
 
   // Subscribe to the Gazebo joint state topic for this model
@@ -100,18 +100,18 @@ hardware_interface::CallbackReturn EmconSystemInterface::on_configure(
     "/world/" + world_name_ + "/model/" + bot_name_ + "/joint_state";
 
   if (!gz_node_->Subscribe(
-        joint_state_topic, &EmconSystemInterface::on_gz_joint_state, this))
+        joint_state_topic, &GzTransportSystemInterface::on_gz_joint_state, this))
   {
     RCLCPP_ERROR(
       get_logger(),
-      "[EMCON] Failed to subscribe to gz-transport topic: %s",
+      "[GzTransport] Failed to subscribe to gz-transport topic: %s",
       joint_state_topic.c_str());
     return hardware_interface::CallbackReturn::ERROR;
   }
 
   RCLCPP_INFO(
     get_logger(),
-    "[EMCON] Subscribed to gz-transport: %s", joint_state_topic.c_str());
+    "[GzTransport] Subscribed to gz-transport: %s", joint_state_topic.c_str());
 
   // ── Advertise joint command topics ──
   for (auto & jc : joint_configs_) {
@@ -129,7 +129,7 @@ hardware_interface::CallbackReturn EmconSystemInterface::on_configure(
     } else {
       RCLCPP_WARN(
         get_logger(),
-        "[EMCON] Unsupported command interface '%s' for joint '%s', skipping.",
+        "[GzTransport] Unsupported command interface '%s' for joint '%s', skipping.",
         jc.command_interface_type.c_str(), jc.name.c_str());
       continue;
     }
@@ -139,7 +139,7 @@ hardware_interface::CallbackReturn EmconSystemInterface::on_configure(
 
     jc.pub = gz_node_->Advertise<gz::msgs::Double>(topic);
     RCLCPP_INFO(
-      get_logger(), "[EMCON] Advertised command topic: %s", topic.c_str());
+      get_logger(), "[GzTransport] Advertised command topic: %s", topic.c_str());
   }
 
   return hardware_interface::CallbackReturn::SUCCESS;
@@ -148,10 +148,10 @@ hardware_interface::CallbackReturn EmconSystemInterface::on_configure(
 // ═══════════════════════════════════════════════════════════════════════════
 //  on_activate — Ready for real-time loop
 // ═══════════════════════════════════════════════════════════════════════════
-hardware_interface::CallbackReturn EmconSystemInterface::on_activate(
+hardware_interface::CallbackReturn GzTransportSystemInterface::on_activate(
   const rclcpp_lifecycle::State & /*previous_state*/)
 {
-  RCLCPP_INFO(get_logger(), "[EMCON] Activating — data diode is live.");
+  RCLCPP_INFO(get_logger(), "[GzTransport] Activating — data diode is live.");
 
   // Seed commands from the latest Gazebo state so there's no jerk on activation
   const auto * snapshot = state_buffer_.readFromNonRT();
@@ -172,20 +172,20 @@ hardware_interface::CallbackReturn EmconSystemInterface::on_activate(
 // ═══════════════════════════════════════════════════════════════════════════
 //  on_deactivate
 // ═══════════════════════════════════════════════════════════════════════════
-hardware_interface::CallbackReturn EmconSystemInterface::on_deactivate(
+hardware_interface::CallbackReturn GzTransportSystemInterface::on_deactivate(
   const rclcpp_lifecycle::State & /*previous_state*/)
 {
-  RCLCPP_INFO(get_logger(), "[EMCON] Deactivating — stopping commands.");
+  RCLCPP_INFO(get_logger(), "[GzTransport] Deactivating — stopping commands.");
   return hardware_interface::CallbackReturn::SUCCESS;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  on_cleanup — Tear down gz-transport
 // ═══════════════════════════════════════════════════════════════════════════
-hardware_interface::CallbackReturn EmconSystemInterface::on_cleanup(
+hardware_interface::CallbackReturn GzTransportSystemInterface::on_cleanup(
   const rclcpp_lifecycle::State & /*previous_state*/)
 {
-  RCLCPP_INFO(get_logger(), "[EMCON] Cleaning up gz-transport node.");
+  RCLCPP_INFO(get_logger(), "[GzTransport] Cleaning up gz-transport node.");
   gz_node_.reset();
   return hardware_interface::CallbackReturn::SUCCESS;
 }
@@ -195,7 +195,7 @@ hardware_interface::CallbackReturn EmconSystemInterface::on_cleanup(
 //
 //  RT-SAFE: readFromRT() is an atomic pointer dereference — never blocks.
 // ═══════════════════════════════════════════════════════════════════════════
-hardware_interface::return_type EmconSystemInterface::read(
+hardware_interface::return_type GzTransportSystemInterface::read(
   const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/)
 {
   const auto * snapshot = state_buffer_.readFromRT();
@@ -220,7 +220,7 @@ hardware_interface::return_type EmconSystemInterface::read(
 // ═══════════════════════════════════════════════════════════════════════════
 //  write — Beam commands to Gazebo via gz-transport
 // ═══════════════════════════════════════════════════════════════════════════
-hardware_interface::return_type EmconSystemInterface::write(
+hardware_interface::return_type GzTransportSystemInterface::write(
   const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/)
 {
   for (size_t i = 0; i < joint_configs_.size(); ++i) {
@@ -259,7 +259,7 @@ hardware_interface::return_type EmconSystemInterface::write(
 //  Builds a complete snapshot and swaps it into the RealtimeBuffer.
 //  The RT thread (read()) picks it up via an atomic pointer dereference.
 // ═══════════════════════════════════════════════════════════════════════════
-void EmconSystemInterface::on_gz_joint_state(const gz::msgs::Model & msg)
+void GzTransportSystemInterface::on_gz_joint_state(const gz::msgs::Model & msg)
 {
   const size_t n = joint_configs_.size();
 
@@ -291,9 +291,9 @@ void EmconSystemInterface::on_gz_joint_state(const gz::msgs::Model & msg)
   state_buffer_.writeFromNonRT(snapshot);
 }
 
-}  // namespace emcon_hardware_interface
+}  // namespace gz_transport_hardware_interface
 
 // ── pluginlib registration ──
 PLUGINLIB_EXPORT_CLASS(
-  emcon_hardware_interface::EmconSystemInterface,
+  gz_transport_hardware_interface::GzTransportSystemInterface,
   hardware_interface::SystemInterface)

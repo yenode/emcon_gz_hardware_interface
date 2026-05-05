@@ -1,4 +1,4 @@
-# emcon_hardware_interface
+# gz_transport_hardware_interface
 
 A **ros2_control `SystemInterface`** that bridges joint commands and states between the ROS 2 controller manager and the Gazebo physics engine using **gz-transport directly**, bypassing ROS 2 DDS entirely.
 
@@ -12,7 +12,7 @@ The standard `gz_ros2_control` package runs the entire controller manager *insid
 - You operate **multi-robot fleets** where each robot's controller manager must be network-isolated from the physics engine.
 - You want the controller manager on a **separate machine** from the Gazebo instance.
 
-EMCON solves this by acting as a lightweight **data diode**: it subscribes to Gazebo joint states and publishes joint commands over `gz::transport`, which uses its own discovery and serialization layer — completely independent of DDS.
+GzTransport solves this by acting as a lightweight **data diode**: it subscribes to Gazebo joint states and publishes joint commands over `gz::transport`, which uses its own discovery and serialization layer — completely independent of DDS.
 
 ## Architecture
 
@@ -20,7 +20,7 @@ EMCON solves this by acting as a lightweight **data diode**: it subscribes to Ga
 ┌─────────────────────────────┐          gz-transport          ┌──────────────────┐
 │  ROS 2 Controller Manager   │  ◄──── joint states ─────────  │                  │
 │                              │                                │  Gazebo Harmonic  │
-│  EmconSystemInterface        │  ────► joint commands ───────► │  (Physics Engine) │
+│  GzTransportSystemInterface  │  ────► joint commands ───────► │  (Physics Engine) │
 │  (this package)              │                                │                  │
 └─────────────────────────────┘     (no DDS, no ros_gz_bridge)  └──────────────────┘
 ```
@@ -35,9 +35,9 @@ EMCON solves this by acting as a lightweight **data diode**: it subscribes to Ga
 Add this to your robot's URDF/Xacro:
 
 ```xml
-<ros2_control name="emcon_system" type="system">
+<ros2_control name="gz_transport_system" type="system">
   <hardware>
-    <plugin>emcon_hardware_interface/EmconSystemInterface</plugin>
+    <plugin>gz_transport_hardware_interface/GzTransportSystemInterface</plugin>
     <param name="bot_name">my_robot</param>
     <param name="world_name">my_world</param>
   </hardware>
@@ -61,16 +61,16 @@ Add this to your robot's URDF/Xacro:
 ```bash
 # Clone into your colcon workspace
 cd ~/ros2_ws/src
-git clone https://github.com/yenode/emcon_hardware_interface.git
+git clone https://github.com/yenode/gz_transport_hardware_interface.git
 
 # Build
 cd ~/ros2_ws
 source /opt/ros/jazzy/setup.bash
-colcon build --packages-select emcon_hardware_interface
+colcon build --packages-select gz_transport_hardware_interface
 
 # Verify
 source install/setup.bash
-ros2 pkg list | grep emcon
+ros2 pkg list | grep gz_transport
 ```
 
 ### Dependencies

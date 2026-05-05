@@ -1,19 +1,19 @@
-// Copyright 2026 Silent Sentry Project
+// Copyright 2026 Aditya Pachauri
 // SPDX-License-Identifier: Apache-2.0
 //
-// EMCON — ros2_control SystemInterface
+// GzTransport — ros2_control SystemInterface
 // Bridges joint commands/states to Gazebo via gz-transport,
 // bypassing ROS 2 DDS entirely.
 
-#ifndef EMCON_HARDWARE_INTERFACE__EMCON_SYSTEM_INTERFACE_HPP_
-#define EMCON_HARDWARE_INTERFACE__EMCON_SYSTEM_INTERFACE_HPP_
+#ifndef GZ_TRANSPORT_HARDWARE_INTERFACE__GZ_TRANSPORT_SYSTEM_INTERFACE_HPP_
+#define GZ_TRANSPORT_HARDWARE_INTERFACE__GZ_TRANSPORT_SYSTEM_INTERFACE_HPP_
 
 #include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
-#include "emcon_hardware_interface/visibility_control.h"
+#include "gz_transport_hardware_interface/visibility_control.h"
 
 #include "hardware_interface/system_interface.hpp"
 #include "hardware_interface/types/hardware_interface_return_values.hpp"
@@ -26,7 +26,7 @@
 #include <gz/msgs/model.pb.h>
 #include <gz/msgs/double.pb.h>
 
-namespace emcon_hardware_interface
+namespace gz_transport_hardware_interface
 {
 
 /// Static per-joint configuration. Set during on_init, immutable at runtime.
@@ -50,40 +50,40 @@ struct JointStateSnapshot
   std::vector<double> velocities;
 };
 
-class EmconSystemInterface : public hardware_interface::SystemInterface
+class GzTransportSystemInterface : public hardware_interface::SystemInterface
 {
 public:
-  RCLCPP_SHARED_PTR_DEFINITIONS(EmconSystemInterface)
+  RCLCPP_SHARED_PTR_DEFINITIONS(GzTransportSystemInterface)
 
   // ── lifecycle callbacks ──
 
-  EMCON_HARDWARE_INTERFACE_PUBLIC
+  GZ_TRANSPORT_HARDWARE_INTERFACE_PUBLIC
   hardware_interface::CallbackReturn on_init(
     const hardware_interface::HardwareInfo & hardware_info) override;
 
-  EMCON_HARDWARE_INTERFACE_PUBLIC
+  GZ_TRANSPORT_HARDWARE_INTERFACE_PUBLIC
   hardware_interface::CallbackReturn on_configure(
     const rclcpp_lifecycle::State & previous_state) override;
 
-  EMCON_HARDWARE_INTERFACE_PUBLIC
+  GZ_TRANSPORT_HARDWARE_INTERFACE_PUBLIC
   hardware_interface::CallbackReturn on_activate(
     const rclcpp_lifecycle::State & previous_state) override;
 
-  EMCON_HARDWARE_INTERFACE_PUBLIC
+  GZ_TRANSPORT_HARDWARE_INTERFACE_PUBLIC
   hardware_interface::CallbackReturn on_deactivate(
     const rclcpp_lifecycle::State & previous_state) override;
 
-  EMCON_HARDWARE_INTERFACE_PUBLIC
+  GZ_TRANSPORT_HARDWARE_INTERFACE_PUBLIC
   hardware_interface::CallbackReturn on_cleanup(
     const rclcpp_lifecycle::State & previous_state) override;
 
   // ── realtime loop ──
 
-  EMCON_HARDWARE_INTERFACE_PUBLIC
+  GZ_TRANSPORT_HARDWARE_INTERFACE_PUBLIC
   hardware_interface::return_type read(
     const rclcpp::Time & time, const rclcpp::Duration & period) override;
 
-  EMCON_HARDWARE_INTERFACE_PUBLIC
+  GZ_TRANSPORT_HARDWARE_INTERFACE_PUBLIC
   hardware_interface::return_type write(
     const rclcpp::Time & time, const rclcpp::Duration & period) override;
 
@@ -116,6 +116,6 @@ private:
   std::unordered_map<std::string, size_t> joint_name_to_index_;
 };
 
-}  // namespace emcon_hardware_interface
+}  // namespace gz_transport_hardware_interface
 
-#endif  // EMCON_HARDWARE_INTERFACE__EMCON_SYSTEM_INTERFACE_HPP_
+#endif  // GZ_TRANSPORT_HARDWARE_INTERFACE__GZ_TRANSPORT_SYSTEM_INTERFACE_HPP_
