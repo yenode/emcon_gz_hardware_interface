@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(emcon_hardware_interface)
+project(gz_transport_hardware_interface)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -20,11 +20,11 @@ find_package(gz-msgs10 REQUIRED)
 
 
 add_library(${PROJECT_NAME} SHARED
-  src/emcon_system_interface.cpp
+  src/gz_transport_system_interface.cpp
 )
 
 target_compile_definitions(${PROJECT_NAME}
-  PRIVATE "EMCON_HARDWARE_INTERFACE_BUILDING_DLL"
+  PRIVATE "GZ_TRANSPORT_HARDWARE_INTERFACE_BUILDING_DLL"
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC
@@ -46,7 +46,7 @@ target_link_libraries(${PROJECT_NAME}
 )
 
 
-pluginlib_export_plugin_description_file(hardware_interface emcon_hardware_interface.xml)
+pluginlib_export_plugin_description_file(hardware_interface gz_transport_hardware_interface.xml)
 
 
 install(
