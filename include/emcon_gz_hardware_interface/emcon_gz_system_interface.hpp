@@ -77,6 +77,7 @@ private:
   std::vector<double> joint_commands_;
   std::string bot_name_;
   std::string world_name_;
+  std::string joint_state_topic_;
   std::unique_ptr<gz::transport::Node> gz_node_;
   realtime_tools::RealtimeBuffer<JointStateSnapshot> state_buffer_;
   std::unordered_map<std::string, size_t> joint_name_to_index_;

@@ -27,12 +27,25 @@ hardware_interface::CallbackReturn EmconGzSystemInterface::on_init(
 #pragma GCC diagnostic pop
 
   auto it_bot = info_.hardware_parameters.find("bot_name");
-  bot_name_ = (it_bot != info_.hardware_parameters.end()) ?
-    it_bot->second : "autobot";
+  if (it_bot == info_.hardware_parameters.end()) {
+    RCLCPP_ERROR(get_logger(), "[EmconGz] Hardware parameter 'bot_name' is missing.");
+    return hardware_interface::CallbackReturn::ERROR;
+  }
+  bot_name_ = it_bot->second;
 
   auto it_world = info_.hardware_parameters.find("world_name");
-  world_name_ = (it_world != info_.hardware_parameters.end()) ?
-    it_world->second : "thar_desert";
+  if (it_world == info_.hardware_parameters.end()) {
+    RCLCPP_ERROR(get_logger(), "[EmconGz] Hardware parameter 'world_name' is missing.");
+    return hardware_interface::CallbackReturn::ERROR;
+  }
+  world_name_ = it_world->second;
+
+  auto it_topic = info_.hardware_parameters.find("joint_state_topic");
+  if (it_topic != info_.hardware_parameters.end()) {
+    joint_state_topic_ = it_topic->second;
+  } else {
+    joint_state_topic_ = "/world/" + world_name_ + "/model/" + bot_name_ + "/joint_state";
+  }
 
   RCLCPP_INFO(
     get_logger(),
@@ -75,22 +88,19 @@ hardware_interface::CallbackReturn EmconGzSystemInterface::on_configure(
 {
   gz_node_ = std::make_unique<gz::transport::Node>();
 
-  const std::string joint_state_topic =
-    "/world/" + world_name_ + "/model/" + bot_name_ + "/joint_state";
-
   if (!gz_node_->Subscribe(
-        joint_state_topic, &EmconGzSystemInterface::on_gz_joint_state, this))
+        joint_state_topic_, &EmconGzSystemInterface::on_gz_joint_state, this))
   {
     RCLCPP_ERROR(
       get_logger(),
       "[EmconGz] Failed to subscribe to topic: %s",
-      joint_state_topic.c_str());
+      joint_state_topic_.c_str());
     return hardware_interface::CallbackReturn::ERROR;
   }
 
   RCLCPP_INFO(
     get_logger(),
-    "[EmconGz] Subscribed to topic: %s", joint_state_topic.c_str());
+    "[EmconGz] Subscribed to topic: %s", joint_state_topic_.c_str());
 
   for (auto & jc : joint_configs_) {
     if (jc.command_interface_type.empty()) {
