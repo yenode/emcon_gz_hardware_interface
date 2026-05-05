@@ -1,7 +1,5 @@
 # EMCON Gazebo Hardware Interface (`emcon_gz_hardware_interface`)
 
-![CI](https://github.com/yenode/emcon_gz_hardware_interface/actions/workflows/build.yml/badge.svg)
-
 A high-performance `ros2_control` SystemInterface that bridges joint states and commands directly with Gazebo Harmonic using native `gz-transport`, bypassing the ROS 2 DDS layer entirely.
 
 ## Why this exists (The Problem)
