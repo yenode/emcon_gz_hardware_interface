@@ -16,14 +16,12 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-        with:
-          path: src/emcon_gz_hardware_interface
 
       - name: Setup ROS Workspace
         run: |
           sudo apt-get update
           rosdep update
-          rosdep install --from-paths src --ignore-src -r -y
+          rosdep install --from-paths . --ignore-src -r -y
           
       - name: Install Additional Dependencies
         run: |
