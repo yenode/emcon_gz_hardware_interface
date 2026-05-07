@@ -1,12 +1,12 @@
 # EMCON Gazebo Hardware Interface (`emcon_gz_hardware_interface`)
 
-A high-performance `ros2_control` SystemInterface that bridges joint states and commands directly with Gazebo Harmonic using native `gz-transport`, bypassing the ROS 2 DDS layer entirely.
+A high-performance `ros2_control` SystemInterface that bridges joint states and commands directly with Gazebo Harmonic using native `gz-transport`, bypassing the ROS 2 RMW layer entirely.
 
 ## Why this exists (The Problem)
 
 In standard `gz_ros2_control` setups, the controller manager runs inside the Gazebo process and communicates over shared memory. While highly efficient for single-robot setups, this architecture presents significant challenges when:
 1. **Network Isolation**: Running complex, custom state estimators or multi-domain networks where simulation traffic (`gz-transport`) must be strictly isolated from your primary `ROS_DOMAIN_ID`.
-2. **Multi-Robot Scaling**: Managing fleets of UGV/UAVs where DDS discovery overhead from simulation data congests the network.
+2. **Multi-Robot Scaling**: Managing fleets of UGV/UAVs where RMW discovery overhead from simulation data congests the network.
 
 ## The Solution
 
@@ -14,7 +14,7 @@ In standard `gz_ros2_control` setups, the controller manager runs inside the Gaz
 It functions as a standard `SystemInterface` in your standalone ROS 2 stack, but uses native `gz::transport` to subscribe to Gazebo joint states and publish joint commands.
 
 ### Key Features
-* **DDS Bypass**: Zero ROS 2 topics are used for simulation communication.
+* **RMW Bypass**: Zero ROS 2 topics are used for simulation communication.
 * **Real-Time Safe**: Implements `realtime_tools::RealtimeBuffer`. The `read()` method uses atomic pointer dereferencing and **never blocks** the control loop, even when Gazebo state callbacks fire at high frequencies.
 * **O(1) Joint Lookup**: Optimized hash map lookups ensure low latency regardless of robot complexity.
 * **Configurable**: No hardcoded names or topics. Everything is defined in your URDF.
