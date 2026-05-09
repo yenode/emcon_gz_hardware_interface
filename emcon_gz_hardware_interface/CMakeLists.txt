@@ -72,6 +72,22 @@ if(BUILD_TESTING)
   set(ament_cmake_copyright_FOUND TRUE)
   set(ament_cmake_cpplint_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
+
+  find_package(ament_cmake_gtest REQUIRED)
+
+  ament_add_gtest(test_emcon_gz_system_interface
+    test/test_emcon_gz_system_interface.cpp
+  )
+
+  ament_target_dependencies(test_emcon_gz_system_interface
+    hardware_interface
+    rclcpp
+    rclcpp_lifecycle
+  )
+
+  target_link_libraries(test_emcon_gz_system_interface
+    ${PROJECT_NAME}
+  )
 endif()
 
 ament_package()
