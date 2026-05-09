@@ -4,8 +4,16 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <atomic>
+#include <chrono>
+#include <functional>
 #include <memory>
 #include <string>
+#include <thread>
+
+#include <gz/msgs/double.pb.h>
+#include <gz/msgs/model.pb.h>
+#include <gz/transport/Node.hh>
 
 #include "hardware_interface/hardware_info.hpp"
 #include "hardware_interface/lifecycle_helpers.hpp"
@@ -270,6 +278,70 @@ TEST_F(EmconGzSystemInterfaceTest, ReadWriteReturnOk)
 
   auto write_result = rm->write(t, dt);
   EXPECT_EQ(write_result.result, hardware_interface::return_type::OK);
+}
+
+// Verify actual data flow: reading from and writing to gz-transport.
+TEST_F(EmconGzSystemInterfaceTest, DataFlowPubSub)
+{
+  auto rm = make_resource_manager(kValidUrdf);
+
+  rclcpp_lifecycle::State active_state(
+    lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE,
+    hardware_interface::lifecycle_state_names::ACTIVE);
+  rm->set_component_state("emcon_gz_test", active_state);
+
+  // Set up a mock Gazebo node
+  gz::transport::Node test_node;
+
+  // 1. Test Writing (ROS -> Gazebo)
+  std::atomic<bool> cmd_received{false};
+  std::atomic<double> received_cmd_value{0.0};
+
+  auto cmd_cb = [&](const gz::msgs::Double & msg) {
+      received_cmd_value = msg.data();
+      cmd_received = true;
+    };
+
+  EXPECT_TRUE(test_node.Subscribe(
+    "/model/test_robot/joint/wheel_joint/cmd_vel",
+    std::function<void(const gz::msgs::Double &)>(cmd_cb)));
+
+  rm->claim_command_interface("wheel_joint/velocity").set_value(42.5);
+
+  const rclcpp::Time t(0, 0, RCL_ROS_TIME);
+  const rclcpp::Duration dt = rclcpp::Duration::from_seconds(0.01);
+
+  rm->write(t, dt);
+
+  // Wait up to 1 second for the message to propagate over gz-transport
+  int retries = 0;
+  while (!cmd_received && retries++ < 100) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+  }
+
+  EXPECT_TRUE(cmd_received.load()) << "Did not receive command message via gz-transport";
+  EXPECT_DOUBLE_EQ(received_cmd_value.load(), 42.5);
+
+  // 2. Test Reading (Gazebo -> ROS)
+  auto state_pub = test_node.Advertise<gz::msgs::Model>(
+    "/world/test_world/model/test_robot/joint_state");
+
+  gz::msgs::Model msg;
+  auto * joint = msg.add_joint();
+  joint->set_name("wheel_joint");
+  auto * axis = joint->mutable_axis1();
+  axis->set_position(1.23);
+  axis->set_velocity(-4.56);
+
+  state_pub.Publish(msg);
+
+  // Wait a tiny bit for the subscriber in the interface to process it
+  std::this_thread::sleep_for(std::chrono::milliseconds(50));
+
+  rm->read(t, dt);
+
+  EXPECT_DOUBLE_EQ(rm->claim_state_interface("wheel_joint/position").get_value(), 1.23);
+  EXPECT_DOUBLE_EQ(rm->claim_state_interface("wheel_joint/velocity").get_value(), -4.56);
 }
 
 int main(int argc, char ** argv)
